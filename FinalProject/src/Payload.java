@@ -27,10 +27,21 @@ public class Payload implements Serializable{
 	public int getNumber() {
 		return this.number;
 	}
+	
+	private String XorO;
+	public void setXorO(String xo) {
+		this.XorO = xo;
+	}
+	
+	public String getXorO() {
+		return this.XorO;
+	}
+	
+	
 	@Override
 	public String toString() {
-		return String.format("Type[%s], Number[%s], Message[%s]",
-					getPayloadType().toString(), getNumber(), getMessage());
+		return String.format("Type[%s], Number[%s], XorO[%], Message[%s]",
+					getPayloadType().toString(), getNumber(),getXorO(), getMessage());
 	}
 
 }

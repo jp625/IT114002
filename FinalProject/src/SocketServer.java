@@ -1,16 +1,29 @@
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+
+import com.google.gson.Gson;
+
 
 public class SocketServer {
 	int port = 3002;
 	public static boolean isRunning = true;
 	private List<ServerThread> clients = new ArrayList<ServerThread>();
+	//We'll use a queue and a thread to separate our chat history
+	Queue<String> messages = new LinkedList<String>();
 	private void start(int port) {
 		this.port = port;
+		startQueueReader();
+		//sample score save, why not here?
+		//loadScore();
+		//saveScore(1000);
 		System.out.println("Waiting for client");
 		try (ServerSocket serverSocket = new ServerSocket(port);) {
 			while(SocketServer.isRunning) {
@@ -41,6 +54,63 @@ public class SocketServer {
 			}
 		}
 	}
+	//void loadScore() {
+		//try {
+			//Gson gson = new Gson();
+			//ScoreState ss= gson.fromJson(new FileReader("score.json"), ScoreState.class);
+			//long s = (long) ss.scores.get(0).score;
+			//System.out.println("Loaded score: " + s);
+		//} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//e.printStackTrace();
+		//}
+	//}
+	//void saveScore(int score){
+		//false because we don't want to append
+		//we want to update/replace the object
+		//sample
+		//ScoreState ss = new ScoreState();
+		//ss.scores.add(new Score("Bob", 1000));
+		//ss.scores.add(new Score("Joe", 500));
+		//System.out.println(ss.toString());
+		//try(FileWriter writer = new FileWriter("score.json",false)){
+			//TODO get ScoreState to convert to JSON Object
+			//Gson gson = new Gson();
+			//writer.write(gson.toJson(ss));
+			//writer.flush();
+		//}
+		//catch(Exception e) {
+			//e.printStackTrace();
+		//}
+	//}
+	void startQueueReader() {
+		System.out.println("Preparing Queue Reader");
+		Thread queueReader = new Thread() {
+			@Override
+			public void run() {
+				String message = "";
+				try(FileWriter write = new FileWriter("chathistory.txt", true)){
+					while(isRunning) {
+						message = messages.poll();
+						if(message != null) {
+							message = messages.poll();
+							write.append(message);
+							write.write(System.lineSeparator());
+							write.flush();
+						}
+						//sleep for a bit to let OS multi-task
+						//since it's FIFO we don't need immediate polling
+						sleep(50);
+					}
+				}
+				catch(IOException | InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		queueReader.start();
+		System.out.println("Started Queue Reader");
+	}
 	@Deprecated
 	int getClientIndexByThreadId(long id) {
 		for(int i = 0, l = clients.size(); i < l;i++) {
@@ -62,6 +132,8 @@ public class SocketServer {
 	}
 	public synchronized void broadcast(Payload payload) {
 		System.out.println("Sending message to " + clients.size() + " clients");
+		//TODO record message
+		storeInFile(payload.getMessage());
 		Iterator<ServerThread> iter = clients.iterator();
 		while(iter.hasNext()) {
 			ServerThread client = iter.next();
@@ -100,7 +172,11 @@ public class SocketServer {
 		payload.setMessage(message);
 		broadcast(payload, id);
 	}
-	
+	void storeInFile(String message) {
+		//add our message to our queue
+		messages.add(message);
+		//we'll have a separate thread do the actual saving for now
+	}
 
 	public static void main(String[] args) {
 		//let's allow port to be passed as a command line arg

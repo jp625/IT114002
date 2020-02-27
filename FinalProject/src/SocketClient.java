@@ -37,6 +37,13 @@ public class SocketClient {
 				}
 			}
 			while(!server.isClosed() && name != null && name.length() == 0);
+			Scanner l = new Scanner(System.in);
+			String Letter = "";
+			do {
+				System.out.println("Are you X or O? (Use capital letters.");
+				Letter = l.nextLine();
+			}
+			while(Letter != "X" || Letter != "O");
 			//we should have a name, let's tell our server
 			Payload p = new Payload();
 			//we can also default payloadtype in payload
@@ -44,6 +51,7 @@ public class SocketClient {
 			//what we're sending
 			p.setPayloadType(PayloadType.CONNECT);
 			p.setMessage(name);
+			p.setXorO(Letter);
 			out.writeObject(p);
 			
 			
@@ -132,6 +140,23 @@ public class SocketClient {
 			close();
 		}
 	}
+	//Point direction = new Point(0,0); USES X AND Y
+	
+	//void KeyListener(){
+	//Point lastDir = new Point(0,0);
+	//lastDir.x = direction.x;
+	//lastDir.y = direction.y;
+	//boolean isUp = true;
+	//if(isUp){
+		//direction.y = -1;
+	//}
+	//if(!lastDir.equals(direction)){
+		//Payload p = new Payload();
+		//p.setPayloadType(PayLoadType.CHANGE_DIRECTION);
+		//p.setX(direction.x);
+		//p.setY(direction.y);
+	//}
+	//}
 	private void processPayload(Payload payload) {
 		System.out.println(payload);
 		switch(payload.getPayloadType()) {
